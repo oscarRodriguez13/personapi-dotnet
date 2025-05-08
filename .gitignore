@@ -1,0 +1,66 @@
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+*.log
+
+# Rider project files
+.idea/
+
+# ASP.NET artifacts
+wwwroot/lib/
+wwwroot/node_modules/
+node_modules/
+
+# Npm packages
+package-lock.json
+yarn.lock
+
+# NuGet packages
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Dotnet CLI
+project.assets.json
+project.nuget.cache
+*.csproj.user
+
+# EF Core
+Migrations/
+
+# Others
+*.db
+*.sqlite
+*.mdf
+*.ldf
+*.bak
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage tools
+coverage/
+TestResults/
+*.coverage
+*.coveragexml
+*.testsettings
+*.runsettings
