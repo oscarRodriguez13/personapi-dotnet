@@ -1,42 +1,33 @@
 ﻿@model personapi_dotnet.Models.Entities.Persona
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalles de Persona";
 }
 
-<h1>Details</h1>
+<div class="container py-4">
+    <div class="card fade-in">
+        <div class="card-header">
+            <h3 class="mb-0 text-gradient">Detalles de la Persona</h3>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-4">
+                <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Nombre)</dt>
+                <dd class="col-sm-9">@Html.DisplayFor(model => model.Nombre)</dd>
 
-<div>
-    <h4>Persona</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Nombre)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Nombre)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Apellido)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Apellido)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Genero)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Genero)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Edad)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Edad)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Cc">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+                <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Apellido)</dt>
+                <dd class="col-sm-9">@Html.DisplayFor(model => model.Apellido)</dd>
+
+                <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Genero)</dt>
+                <dd class="col-sm-9">@Html.DisplayFor(model => model.Genero)</dd>
+
+                <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Edad)</dt>
+                <dd class="col-sm-9">@Html.DisplayFor(model => model.Edad)</dd>
+            </dl>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <a asp-action="Edit" asp-route-id="@Model?.Cc" class="btn btn-primary">Editar</a>
+                <a asp-action="Index" class="btn btn-outline-primary">Volver a la lista</a>
+            </div>
+        </div>
+    </div>
 </div>

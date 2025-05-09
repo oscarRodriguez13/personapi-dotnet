@@ -1,39 +1,99 @@
 ﻿@model personapi_dotnet.Models.Entities.Telefono
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Teléfono";
 }
 
-<h1>Edit</h1>
+<div class="card shadow-sm fade-in">
+    <div class="card-header bg-gradient d-flex align-items-center">
+        <div class="icon-circle me-3">
+            <i class="fas fa-edit"></i>
+        </div>
+        <div>
+            <h4 class="mb-0 fw-bold">Editar Teléfono</h4>
+            <p class="text-muted small mb-0">Modifique los datos del teléfono registrado</p>
+        </div>
+    </div>
 
-<h4>Telefono</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="card-body">
+        <form asp-action="Edit" class="needs-validation" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
             <input type="hidden" asp-for="Num" />
-            <div class="form-group">
-                <label asp-for="Oper" class="control-label"></label>
-                <input asp-for="Oper" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="Oper" class="form-label">Operador</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-broadcast-tower"></i></span>
+                    <input asp-for="Oper" class="form-control" placeholder="Ingrese el operador" />
+                </div>
                 <span asp-validation-for="Oper" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Duenio" class="control-label"></label>
-                <select asp-for="Duenio" class="form-control" asp-items="ViewBag.Duenio"></select>
+
+            <div class="mb-3">
+                <label asp-for="Duenio" class="form-label">Cédula del Dueño</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <select asp-for="Duenio" class="form-select" asp-items="ViewBag.Duenio">
+                        <option value="">Seleccione una persona</option>
+                    </select>
+                </div>
                 <span asp-validation-for="Duenio" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver al listado
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Guardar cambios
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<style>
+    .bg-gradient {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .card {
+        animation: cardEnter 0.5s ease-out;
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+    }
+</style>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Validación del lado del cliente personalizada
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 }

@@ -1,53 +1,231 @@
 ﻿@model IEnumerable<personapi_dotnet.Models.Entities.Persona>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Gestión de Personas";
 }
 
-<h1>Index</h1>
+<div class="card shadow-sm fade-in mb-4">
+    <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div class="icon-circle">
+                <i class="fas fa-users"></i>
+            </div>
+            <div>
+                <h4 class="mb-0 fw-bold">Listado de Personas</h4>
+                <p class="text-muted small mb-0">Administración de registros personales</p>
+            </div>
+        </div>
+        <a asp-action="Create" class="btn btn-light">
+            <i class="fas fa-plus-circle me-2"></i>Agregar Nueva Persona
+        </a>
+    </div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Nombre)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Apellido)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Genero)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Edad)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Nombre)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Apellido)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Genero)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Edad)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Cc">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Cc">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Cc">Delete</a>
-            </td>
-        </tr>
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text bg-light">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="searchInput" class="form-control" placeholder="Buscar persona...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="personasTable">
+                <thead>
+                    <tr>
+                        <th>
+                            <i class="fas fa-id-card me-2 text-primary"></i>
+                            ID
+                        </th>
+                        <th>
+                            <i class="fas fa-user me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.Nombre)
+                        </th>
+                        <th>
+                            <i class="fas fa-user me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.Apellido)
+                        </th>
+                        <th>
+                            <i class="fas fa-venus-mars me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.Genero)
+                        </th>
+                        <th>
+                            <i class="fas fa-birthday-cake me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.Edad)
+                        </th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Cc)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Nombre)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Apellido)
+                            </td>
+                            <td>
+                                @{
+                                    string generoTexto = "";
+                                    string badgeClass = "";
+
+                                    switch (item.Genero)
+                                    {
+                                        case "M":
+                                            generoTexto = "Masculino";
+                                            badgeClass = "primary";
+                                            break;
+                                        case "F":
+                                            generoTexto = "Femenino";
+                                            badgeClass = "info";
+                                            break;
+                                        default:
+                                            generoTexto = "Otro";
+                                            badgeClass = "secondary";
+                                            break;
+                                    }
+                                }
+                                <span class="badge bg-@badgeClass">@generoTexto</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">@Html.DisplayFor(modelItem => item.Edad) años</span>
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a asp-action="Edit" asp-route-id="@item.Cc" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.Cc" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Ver detalles">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Cc" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Eliminar">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div id="noResults" class="alert alert-info text-center d-none mt-3">
+            <i class="fas fa-info-circle me-2"></i>No se encontraron resultados que coincidan con su búsqueda.
+        </div>
+    </div>
+
+    <div class="card-footer text-muted">
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Total: <strong>@Model.Count()</strong> registros</span>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="exportCSV">
+                    <i class="fas fa-file-csv me-1"></i> Exportar CSV
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="printTable">
+                    <i class="fas fa-print me-1"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .table th {
+        font-weight: 600;
+        border-top: none;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .highlight {
+        animation: highlightRow 1.5s ease-out;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Inicializar tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Buscador en tabla
+            const searchInput = document.getElementById('searchInput');
+            const table = document.getElementById('personasTable');
+            const rows = table.getElementsByTagName('tr');
+            const noResults = document.getElementById('noResults');
+
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+                let visibleCount = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const rowData = rows[i].textContent.toLowerCase();
+                    if (rowData.includes(searchTerm)) {
+                        rows[i].style.display = '';
+                        visibleCount++;
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+
+                if (visibleCount === 0) {
+                    noResults.classList.remove('d-none');
+                } else {
+                    noResults.classList.add('d-none');
+                }
+            });
+
+            // Exportar a CSV
+            document.getElementById('exportCSV').addEventListener('click', function() {
+                let csv = [];
+                let rows = document.querySelectorAll('table tr');
+
+                for (let i = 0; i < rows.length; i++) {
+                    let row = [], cols = rows[i].querySelectorAll('td, th');
+
+                    for (let j = 0; j < cols.length - 1; j++) {
+                        // Excluimos la columna de acciones
+                        row.push(cols[j].innerText);
+                    }
+
+                    csv.push(row.join(','));
+                }
+
+                downloadCSV(csv.join('\n'), 'personas.csv');
+            });
+
+            // Función para descargar CSV
+            function downloadCSV(csv, filename) {
+                let csvFile = new Blob([csv], {type: "text/csv"});
+                let downloadLink = document.createElement("a");
+
+                downloadLink.download = filename;
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+
+                downloadLink.click();
+            }
+
+            // Imprimir tabla
+            document.getElementById('printTable').addEventListener('click', function() {
+                window.print();
+            });
+        });
+    </script>
 }
-    </tbody>
-</table>

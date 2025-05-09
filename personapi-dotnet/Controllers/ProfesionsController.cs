@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace personapi_dotnet.Controllers
 {
-    public class ProfesionesController : Controller
+    public class ProfesionsController : Controller
     {
         private readonly IProfesionRepository _profesionRepository;
 
-        public ProfesionesController(IProfesionRepository profesionRepository)
+        public ProfesionsController(IProfesionRepository profesionRepository)
         {
             _profesionRepository = profesionRepository;
         }

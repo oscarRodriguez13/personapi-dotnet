@@ -1,43 +1,110 @@
 ﻿@model personapi_dotnet.Models.Entities.Profesion
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Crear Profesión";
 }
 
-<h1>Create</h1>
+<div class="card shadow-sm fade-in mb-4">
+    <div class="card-header bg-gradient d-flex align-items-center">
+        <div class="icon-circle me-3">
+            <i class="fas fa-briefcase"></i>
+        </div>
+        <div>
+            <h4 class="mb-0 fw-bold">Crear Nueva Profesión</h4>
+            <p class="text-muted small mb-0">Ingrese los datos de la nueva profesión</p>
+        </div>
+    </div>
 
-<h4>Profesion</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Id" class="control-label"></label>
-                <input asp-for="Id" class="form-control" />
+    <div class="card-body">
+        <form asp-action="Create" class="needs-validation" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Id" class="form-label">Código</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-key"></i></span>
+                    <input asp-for="Id" class="form-control" placeholder="Ej. 101" />
+                </div>
                 <span asp-validation-for="Id" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Nom" class="control-label"></label>
-                <input asp-for="Nom" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="Nom" class="form-label">Nombre</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                    <input asp-for="Nom" class="form-control" placeholder="Nombre de la profesión" />
+                </div>
                 <span asp-validation-for="Nom" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Des" class="control-label"></label>
-                <input asp-for="Des" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="Des" class="form-label">Descripción</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-align-left"></i></span>
+                    <input asp-for="Des" class="form-control" placeholder="Descripción breve" />
+                </div>
                 <span asp-validation-for="Des" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver al listado
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Guardar
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<style>
+    .bg-gradient {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .fade-in {
+        animation: fadeIn 0.4s ease-in;
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Bootstrap form validation
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 }

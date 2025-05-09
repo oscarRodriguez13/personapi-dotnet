@@ -1,42 +1,105 @@
 ﻿@model personapi_dotnet.Models.Entities.Telefono
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Nuevo Teléfono";
 }
 
-<h1>Create</h1>
+<div class="card shadow-sm fade-in">
+    <div class="card-header bg-gradient d-flex align-items-center">
+        <div class="icon-circle me-3">
+            <i class="fas fa-phone-plus"></i>
+        </div>
+        <div>
+            <h4 class="mb-0 fw-bold">Registrar Teléfono</h4>
+            <p class="text-muted small mb-0">Complete el formulario para asociar un nuevo número</p>
+        </div>
+    </div>
 
-<h4>Telefono</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Num" class="control-label"></label>
-                <input asp-for="Num" class="form-control" />
+    <div class="card-body">
+        <form asp-action="Create" class="needs-validation" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="Num" class="form-label">Número de Teléfono</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                    <input asp-for="Num" class="form-control" placeholder="Ej: 3001234567" />
+                </div>
                 <span asp-validation-for="Num" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Oper" class="control-label"></label>
-                <input asp-for="Oper" class="form-control" />
+
+            <div class="mb-3">
+                <label asp-for="Oper" class="form-label">Operador</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-broadcast-tower"></i></span>
+                    <input asp-for="Oper" class="form-control" placeholder="Ej: Claro, Movistar..." />
+                </div>
                 <span asp-validation-for="Oper" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Duenio" class="control-label"></label>
-                <select asp-for="Duenio" class ="form-control" asp-items="ViewBag.Duenio"></select>
+
+            <div class="mb-3">
+                <label asp-for="Duenio" class="form-label">Dueño</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <select asp-for="Duenio" class="form-select" asp-items="ViewBag.Duenio">
+                        <option value="">Seleccione una persona</option>
+                    </select>
+                </div>
+                <span asp-validation-for="Duenio" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver al listado
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Guardar teléfono
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<style>
+    .bg-gradient {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+    }
+
+    .card {
+        animation: cardEnter 0.5s ease-out;
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 }

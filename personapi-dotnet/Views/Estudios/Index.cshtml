@@ -1,53 +1,205 @@
 ﻿@model IEnumerable<personapi_dotnet.Models.Entities.Estudio>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Gestión de Estudios";
 }
 
-<h1>Index</h1>
+<div class="card shadow-sm fade-in mb-4">
+    <div class="card-header bg-gradient d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div class="icon-circle">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div>
+                <h4 class="mb-0 fw-bold">Listado de Estudios</h4>
+                <p class="text-muted small mb-0">Administración de registros de estudios académicos</p>
+            </div>
+        </div>
+        <a asp-action="Create" class="btn btn-light">
+            <i class="fas fa-plus-circle me-2"></i> Agregar Nuevo Estudio
+        </a>
+    </div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Fecha)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Univer)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CcPerNavigation)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IdProfNavigation)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Fecha)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Univer)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CcPerNavigation.Cc)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IdProfNavigation.Id)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="input-group">
+                <span class="input-group-text bg-light">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="searchInput" class="form-control" placeholder="Buscar estudio...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="estudiosTable">
+                <thead>
+                    <tr>
+                        <th>
+                            <i class="fas fa-calendar-day me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.Fecha)
+                        </th>
+                        <th>
+                            <i class="fas fa-university me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.Univer)
+                        </th>
+                        <th>
+                            <i class="fas fa-id-card me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.CcPerNavigation.Cc)
+                        </th>
+                        <th>
+                            <i class="fas fa-cogs me-2 text-primary"></i>
+                            @Html.DisplayNameFor(model => model.IdProfNavigation.Id)
+                        </th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Fecha)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Univer)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.CcPerNavigation.Cc)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.IdProfNavigation.Id)
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a asp-action="Edit" asp-route-id="@item.CcPer" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a asp-action="Details" asp-route-id="@item.CcPer" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Ver detalles">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.CcPer" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Eliminar">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div id="noResults" class="alert alert-info text-center d-none mt-3">
+            <i class="fas fa-info-circle me-2"></i>No se encontraron resultados que coincidan con su búsqueda.
+        </div>
+    </div>
+
+    <div class="card-footer text-muted">
+        <div class="d-flex justify-content-between align-items-center">
+            <span>Total: <strong>@Model.Count()</strong> registros</span>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="exportCSV">
+                    <i class="fas fa-file-csv me-1"></i> Exportar CSV
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="printTable">
+                    <i class="fas fa-print me-1"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .table th {
+        font-weight: 600;
+        border-top: none;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .highlight {
+        animation: highlightRow 1.5s ease-out;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Inicializar tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Buscador en tabla
+            const searchInput = document.getElementById('searchInput');
+            const table = document.getElementById('estudiosTable');
+            const rows = table.getElementsByTagName('tr');
+            const noResults = document.getElementById('noResults');
+
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+                let visibleCount = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const rowData = rows[i].textContent.toLowerCase();
+                    if (rowData.includes(searchTerm)) {
+                        rows[i].style.display = '';
+                        visibleCount++;
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+
+                if (visibleCount === 0) {
+                    noResults.classList.remove('d-none');
+                } else {
+                    noResults.classList.add('d-none');
+                }
+            });
+
+            // Exportar a CSV
+            document.getElementById('exportCSV').addEventListener('click', function() {
+                let csv = [];
+                let rows = document.querySelectorAll('table tr');
+
+                for (let i = 0; i < rows.length; i++) {
+                    let row = [], cols = rows[i].querySelectorAll('td, th');
+
+                    for (let j = 0; j < cols.length - 1; j++) {
+                        // Excluimos la columna de acciones
+                        row.push(cols[j].innerText);
+                    }
+
+                    csv.push(row.join(','));
+                }
+
+                downloadCSV(csv.join('\n'), 'estudios.csv');
+            });
+
+            // Función para descargar CSV
+            function downloadCSV(csv, filename) {
+                let csvFile = new Blob([csv], {type: "text/csv"});
+                let downloadLink = document.createElement("a");
+
+                downloadLink.download = filename;
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+
+                downloadLink.click();
+            }
+
+            // Imprimir tabla
+            document.getElementById('printTable').addEventListener('click', function() {
+                window.print();
+            });
+        });
+    </script>
 }
-    </tbody>
-</table>
