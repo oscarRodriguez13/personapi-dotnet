@@ -1,30 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
 using personapi_dotnet.Models.Entities;
+using personapi_dotnet.Models.Interfaces;
+using System.Threading.Tasks;
 
 namespace personapi_dotnet.Controllers
 {
-    public class ProfesionsController : Controller
+    public class ProfesionesController : Controller
     {
-        private readonly PersonaDbContext _context;
+        private readonly IProfesionRepository _profesionRepository;
 
-        public ProfesionsController(PersonaDbContext context)
+        public ProfesionesController(IProfesionRepository profesionRepository)
         {
-            _context = context;
+            _profesionRepository = profesionRepository;
         }
 
-        // GET: Profesions
+        // GET: Profesiones
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Profesions.ToListAsync());
+            var profesiones = await _profesionRepository.GetAllAsync();
+            return View(profesiones);
         }
 
-        // GET: Profesions/Details/5
+        // GET: Profesiones/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -32,8 +29,7 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
-            var profesion = await _context.Profesions
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var profesion = await _profesionRepository.GetByIdAsync(id.Value);
             if (profesion == null)
             {
                 return NotFound();
@@ -42,29 +38,32 @@ namespace personapi_dotnet.Controllers
             return View(profesion);
         }
 
-        // GET: Profesions/Create
+        // GET: Profesiones/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Profesions/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Profesiones/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Nom,Des")] Profesion profesion)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(profesion);
-                await _context.SaveChangesAsync();
+                if (await _profesionRepository.ExistsAsync(profesion.Id))
+                {
+                    ModelState.AddModelError("Id", "Ya existe una profesión con este ID.");
+                    return View(profesion);
+                }
+
+                await _profesionRepository.CreateAsync(profesion);
                 return RedirectToAction(nameof(Index));
             }
             return View(profesion);
         }
 
-        // GET: Profesions/Edit/5
+        // GET: Profesiones/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -72,7 +71,7 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
-            var profesion = await _context.Profesions.FindAsync(id);
+            var profesion = await _profesionRepository.GetByIdAsync(id.Value);
             if (profesion == null)
             {
                 return NotFound();
@@ -80,9 +79,7 @@ namespace personapi_dotnet.Controllers
             return View(profesion);
         }
 
-        // POST: Profesions/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Profesiones/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nom,Des")] Profesion profesion)
@@ -94,28 +91,18 @@ namespace personapi_dotnet.Controllers
 
             if (ModelState.IsValid)
             {
-                try
+                if (!await _profesionRepository.ExistsAsync(profesion.Id))
                 {
-                    _context.Update(profesion);
-                    await _context.SaveChangesAsync();
+                    return NotFound();
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProfesionExists(profesion.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+
+                await _profesionRepository.UpdateAsync(profesion);
                 return RedirectToAction(nameof(Index));
             }
             return View(profesion);
         }
 
-        // GET: Profesions/Delete/5
+        // GET: Profesiones/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -123,8 +110,7 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
-            var profesion = await _context.Profesions
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var profesion = await _profesionRepository.GetByIdAsync(id.Value);
             if (profesion == null)
             {
                 return NotFound();
@@ -133,24 +119,17 @@ namespace personapi_dotnet.Controllers
             return View(profesion);
         }
 
-        // POST: Profesions/Delete/5
+        // POST: Profesiones/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var profesion = await _context.Profesions.FindAsync(id);
-            if (profesion != null)
+            var result = await _profesionRepository.DeleteAsync(id);
+            if (!result)
             {
-                _context.Profesions.Remove(profesion);
+                return NotFound();
             }
-
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ProfesionExists(int id)
-        {
-            return _context.Profesions.Any(e => e.Id == id);
         }
     }
 }

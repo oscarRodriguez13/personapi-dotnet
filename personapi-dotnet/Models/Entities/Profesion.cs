@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace personapi_dotnet.Models.Entities;
-
-public partial class Profesion
+namespace personapi_dotnet.Models.Entities
 {
-    public int Id { get; set; }
+    public class Profesion
+    {
+        public Profesion()
+        {
+            Estudios = new HashSet<Estudio>();
+        }
 
-    public string Nom { get; set; } = null!;
+        public int Id { get; set; }
+        public string Nom { get; set; }
+        public string Des { get; set; }
 
-    public string? Des { get; set; }
-
-    public virtual ICollection<Estudio> Estudios { get; set; } = new List<Estudio>();
+        public virtual ICollection<Estudio> Estudios { get; set; }
+    }
 }

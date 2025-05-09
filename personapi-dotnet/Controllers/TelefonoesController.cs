@@ -1,74 +1,188 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using personapi_dotnet.Models.Entities;
+using personapi_dotnet.Models.Interfaces;
+using System;
+using System.Threading.Tasks;
 
 namespace personapi_dotnet.Controllers
 {
     public class TelefonoesController : Controller
     {
-        private readonly PersonaDbContext _context;
+        private readonly ITelefonoRepository _telefonoRepository;
+        private readonly IPersonaRepository _personaRepository;
+        private readonly ILogger<TelefonoesController> _logger;
 
-        public TelefonoesController(PersonaDbContext context)
+        public TelefonoesController(
+            ITelefonoRepository telefonoRepository,
+            IPersonaRepository personaRepository,
+            ILogger<TelefonoesController> logger)
         {
-            _context = context;
+            _telefonoRepository = telefonoRepository;
+            _personaRepository = personaRepository;
+            _logger = logger;
         }
 
-        // GET: Telefonoes
+        // GET: Telefonos
         public async Task<IActionResult> Index()
         {
-            var personaDbContext = _context.Telefonos.Include(t => t.DuenioNavigation);
-            return View(await personaDbContext.ToListAsync());
+            try
+            {
+                _logger.LogInformation("Obteniendo lista de teléfonos");
+                var telefonos = await _telefonoRepository.GetAllAsync();
+                return View(telefonos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener la lista de teléfonos");
+                TempData["ErrorMessage"] = "Error al cargar la lista de teléfonos: " + ex.Message;
+                return View(new List<Telefono>());
+            }
         }
 
-        // GET: Telefonoes/Details/5
+        // GET: Telefonos/Details/123456789
         public async Task<IActionResult> Details(string id)
         {
             if (id == null)
             {
+                _logger.LogWarning("ID nulo en Details");
                 return NotFound();
             }
 
-            var telefono = await _context.Telefonos
-                .Include(t => t.DuenioNavigation)
-                .FirstOrDefaultAsync(m => m.Num == id);
-            if (telefono == null)
+            try
             {
-                return NotFound();
+                _logger.LogInformation($"Obteniendo detalles del teléfono con ID: {id}");
+                var telefono = await _telefonoRepository.GetByNumeroAsync(id);
+                if (telefono == null)
+                {
+                    _logger.LogWarning($"Teléfono con ID {id} no encontrado");
+                    return NotFound();
+                }
+
+                return View(telefono);
             }
-
-            return View(telefono);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error al obtener detalles del teléfono con ID: {id}");
+                TempData["ErrorMessage"] = "Error al cargar los detalles del teléfono: " + ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
-        // GET: Telefonoes/Create
-        public IActionResult Create()
+        // GET: Telefonos/Create
+        public async Task<IActionResult> Create()
         {
-            ViewData["Duenio"] = new SelectList(_context.Personas, "Cc", "Cc");
-            return View();
+            try
+            {
+                _logger.LogInformation("Cargando formulario de creación de teléfono");
+                var personas = await _personaRepository.GetAllAsync();
+                if (personas == null || !personas.Any())
+                {
+                    _logger.LogWarning("No hay personas disponibles para asignar como dueños");
+                    TempData["WarningMessage"] = "No hay personas disponibles para asignar como dueños de teléfonos. Por favor, cree una persona primero.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                ViewData["Duenio"] = new SelectList(personas, "Cc", "Nombre");
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cargar el formulario de creación de teléfono");
+                TempData["ErrorMessage"] = "Error al cargar el formulario: " + ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
-        // POST: Telefonoes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Telefonos/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Num,Oper,Duenio")] Telefono telefono)
         {
-            if (ModelState.IsValid)
+            try
             {
-                _context.Add(telefono);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                _logger.LogInformation($"Intentando crear teléfono: {telefono.Num}, Operador: {telefono.Oper}, Dueño ID: {telefono.Duenio}");
+
+                // Eliminar cualquier estado de modelo para DuenioNavigation si existe
+                if (ModelState.ContainsKey("DuenioNavigation"))
+                {
+                    ModelState.Remove("DuenioNavigation");
+                }
+
+                // Verificaciones manuales básicas
+                if (string.IsNullOrEmpty(telefono.Num))
+                {
+                    ModelState.AddModelError("Num", "El número de teléfono es obligatorio");
+                }
+
+                if (string.IsNullOrEmpty(telefono.Oper))
+                {
+                    ModelState.AddModelError("Oper", "El operador es obligatorio");
+                }
+
+                // Verificar que Duenio sea válido
+                var persona = await _personaRepository.GetByIdAsync(telefono.Duenio);
+                if (persona == null)
+                {
+                    ModelState.AddModelError("Duenio", "El dueño seleccionado no existe");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    if (await _telefonoRepository.ExistsAsync(telefono.Num))
+                    {
+                        ModelState.AddModelError("Num", "Ya existe un teléfono con este número");
+                        ViewData["Duenio"] = new SelectList(await _personaRepository.GetAllAsync(), "Cc", "Nombre", telefono.Duenio);
+                        return View(telefono);
+                    }
+
+                    // Crear un nuevo objeto Telefono para evitar problemas de seguimiento
+                    var nuevoTelefono = new Telefono
+                    {
+                        Num = telefono.Num,
+                        Oper = telefono.Oper,
+                        Duenio = telefono.Duenio
+                        // No establecemos DuenioNavigation aquí
+                    };
+
+                    await _telefonoRepository.CreateAsync(nuevoTelefono);
+                    _logger.LogInformation($"Teléfono creado exitosamente: {nuevoTelefono.Num}");
+                    TempData["SuccessMessage"] = "Teléfono creado exitosamente";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    _logger.LogWarning("ModelState inválido al crear teléfono");
+                    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        _logger.LogWarning($"Error de validación: {error.ErrorMessage}");
+                    }
+                }
             }
-            ViewData["Duenio"] = new SelectList(_context.Personas, "Cc", "Cc", telefono.Duenio);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear teléfono");
+                ModelState.AddModelError("", "Ha ocurrido un error al crear el teléfono: " + ex.Message);
+            }
+
+            // Si hay errores, recargamos el dropdown
+            try
+            {
+                ViewData["Duenio"] = new SelectList(await _personaRepository.GetAllAsync(), "Cc", "Nombre", telefono.Duenio);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al recargar la lista de personas");
+                ViewData["Duenio"] = new SelectList(new List<Persona>(), "Cc", "Nombre");
+            }
+
             return View(telefono);
         }
 
-        // GET: Telefonoes/Edit/5
+
+        // Resto del controlador...
+        // GET: Telefonos/Edit/123456789
         public async Task<IActionResult> Edit(string id)
         {
             if (id == null)
@@ -76,52 +190,111 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
-            var telefono = await _context.Telefonos.FindAsync(id);
+            var telefono = await _telefonoRepository.GetByNumeroAsync(id);
             if (telefono == null)
             {
                 return NotFound();
             }
-            ViewData["Duenio"] = new SelectList(_context.Personas, "Cc", "Cc", telefono.Duenio);
+
+            ViewData["Duenio"] = new SelectList(await _personaRepository.GetAllAsync(), "Cc", "Nombre", telefono.Duenio);
             return View(telefono);
         }
 
-        // POST: Telefonoes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Telefonos/Edit/123456789
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, [Bind("Num,Oper,Duenio")] Telefono telefono)
         {
             if (id != telefono.Num)
             {
+                _logger.LogWarning($"ID no coincidente en Edit: {id} vs {telefono.Num}");
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            try
             {
-                try
+                _logger.LogInformation($"Intentando editar teléfono: {telefono.Num}, Operador: {telefono.Oper}, Dueño ID: {telefono.Duenio}");
+
+                // Eliminar cualquier estado de modelo para DuenioNavigation si existe
+                if (ModelState.ContainsKey("DuenioNavigation"))
                 {
-                    _context.Update(telefono);
-                    await _context.SaveChangesAsync();
+                    ModelState.Remove("DuenioNavigation");
                 }
-                catch (DbUpdateConcurrencyException)
+
+                // Verificar que el teléfono tenga un número
+                if (string.IsNullOrEmpty(telefono.Num))
                 {
-                    if (!TelefonoExists(telefono.Num))
+                    _logger.LogWarning("Intento de editar teléfono sin número");
+                    ModelState.AddModelError("Num", "El número de teléfono es obligatorio");
+                }
+
+                // Verificar que el operador tenga un valor
+                if (string.IsNullOrEmpty(telefono.Oper))
+                {
+                    _logger.LogWarning("Intento de editar teléfono sin operador");
+                    ModelState.AddModelError("Oper", "El operador es obligatorio");
+                }
+
+                // Verificar que Duenio sea válido
+                var persona = await _personaRepository.GetByIdAsync(telefono.Duenio);
+                if (persona == null)
+                {
+                    _logger.LogWarning($"Dueño con ID {telefono.Duenio} no encontrado");
+                    ModelState.AddModelError("Duenio", "El dueño seleccionado no existe");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    if (!await _telefonoRepository.ExistsAsync(telefono.Num))
                     {
+                        _logger.LogWarning($"Teléfono con número {telefono.Num} no encontrado para editar");
                         return NotFound();
                     }
-                    else
+
+                    // Crear un nuevo objeto Telefono para evitar problemas de seguimiento
+                    var telefonoActualizado = new Telefono
                     {
-                        throw;
+                        Num = telefono.Num,
+                        Oper = telefono.Oper,
+                        Duenio = telefono.Duenio
+                        // No establecemos DuenioNavigation aquí
+                    };
+
+                    await _telefonoRepository.UpdateAsync(telefonoActualizado);
+                    _logger.LogInformation($"Teléfono actualizado exitosamente: {telefonoActualizado.Num}");
+                    TempData["SuccessMessage"] = "Teléfono actualizado exitosamente";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    _logger.LogWarning("ModelState inválido al editar teléfono");
+                    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        _logger.LogWarning($"Error de validación: {error.ErrorMessage}");
                     }
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["Duenio"] = new SelectList(_context.Personas, "Cc", "Cc", telefono.Duenio);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error al editar teléfono con ID: {id}");
+                ModelState.AddModelError("", "Ha ocurrido un error al editar el teléfono: " + ex.Message);
+            }
+
+            // Si hay errores, recargamos el dropdown
+            try
+            {
+                ViewData["Duenio"] = new SelectList(await _personaRepository.GetAllAsync(), "Cc", "Nombre", telefono.Duenio);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al recargar la lista de personas");
+                ViewData["Duenio"] = new SelectList(new List<Persona>(), "Cc", "Nombre");
+            }
+
             return View(telefono);
         }
 
-        // GET: Telefonoes/Delete/5
+        // GET: Telefonos/Delete/123456789
         public async Task<IActionResult> Delete(string id)
         {
             if (id == null)
@@ -129,9 +302,7 @@ namespace personapi_dotnet.Controllers
                 return NotFound();
             }
 
-            var telefono = await _context.Telefonos
-                .Include(t => t.DuenioNavigation)
-                .FirstOrDefaultAsync(m => m.Num == id);
+            var telefono = await _telefonoRepository.GetByNumeroAsync(id);
             if (telefono == null)
             {
                 return NotFound();
@@ -140,24 +311,18 @@ namespace personapi_dotnet.Controllers
             return View(telefono);
         }
 
-        // POST: Telefonoes/Delete/5
+        // POST: Telefonos/Delete/123456789
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string id)
         {
-            var telefono = await _context.Telefonos.FindAsync(id);
-            if (telefono != null)
+            var result = await _telefonoRepository.DeleteAsync(id);
+            if (!result)
             {
-                _context.Telefonos.Remove(telefono);
+                return NotFound();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool TelefonoExists(string id)
-        {
-            return _context.Telefonos.Any(e => e.Num == id);
         }
     }
 }

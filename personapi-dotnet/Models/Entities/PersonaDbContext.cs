@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-
 namespace personapi_dotnet.Models.Entities;
 
 public partial class PersonaDbContext : DbContext
@@ -16,25 +15,24 @@ public partial class PersonaDbContext : DbContext
     }
 
     public virtual DbSet<Estudio> Estudios { get; set; }
-
     public virtual DbSet<Persona> Personas { get; set; }
-
     public virtual DbSet<Profesion> Profesions { get; set; }
-
     public virtual DbSet<Telefono> Telefonos { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=persona_db;Trusted_Connection=True;TrustServerCertificate=true");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=persona_db;Trusted_Connection=True;TrustServerCertificate=true");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Estudio>(entity =>
         {
             entity.HasKey(e => new { e.IdProf, e.CcPer }).HasName("PK__estudios__FB3F71A6B8574F61");
-
             entity.ToTable("estudios");
-
             entity.Property(e => e.IdProf).HasColumnName("id_prof");
             entity.Property(e => e.CcPer).HasColumnName("cc_per");
             entity.Property(e => e.Fecha).HasColumnName("fecha");
@@ -42,12 +40,10 @@ public partial class PersonaDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("univer");
-
             entity.HasOne(d => d.CcPerNavigation).WithMany(p => p.Estudios)
                 .HasForeignKey(d => d.CcPer)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__estudios__cc_per__33D4B598");
-
             entity.HasOne(d => d.IdProfNavigation).WithMany(p => p.Estudios)
                 .HasForeignKey(d => d.IdProf)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -57,9 +53,7 @@ public partial class PersonaDbContext : DbContext
         modelBuilder.Entity<Persona>(entity =>
         {
             entity.HasKey(e => e.Cc).HasName("PK__persona__3213666D564B0149");
-
             entity.ToTable("persona");
-
             entity.Property(e => e.Cc)
                 .ValueGeneratedNever()
                 .HasColumnName("cc");
@@ -82,9 +76,7 @@ public partial class PersonaDbContext : DbContext
         modelBuilder.Entity<Profesion>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__profesio__3213E83F2B1F13F8");
-
             entity.ToTable("profesion");
-
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
@@ -100,9 +92,7 @@ public partial class PersonaDbContext : DbContext
         modelBuilder.Entity<Telefono>(entity =>
         {
             entity.HasKey(e => e.Num).HasName("PK__telefono__DF908D659694C3B2");
-
             entity.ToTable("telefono");
-
             entity.Property(e => e.Num)
                 .HasMaxLength(15)
                 .IsUnicode(false)
@@ -112,7 +102,6 @@ public partial class PersonaDbContext : DbContext
                 .HasMaxLength(45)
                 .IsUnicode(false)
                 .HasColumnName("oper");
-
             entity.HasOne(d => d.DuenioNavigation).WithMany(p => p.Telefonos)
                 .HasForeignKey(d => d.Duenio)
                 .OnDelete(DeleteBehavior.ClientSetNull)
