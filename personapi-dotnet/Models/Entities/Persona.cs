@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace personapi_dotnet.Models.Entities
 {
@@ -17,7 +18,10 @@ namespace personapi_dotnet.Models.Entities
         public int? Edad { get; set; }
         public string Genero { get; set; }
 
+        [JsonIgnore]
         public virtual ICollection<Estudio> Estudios { get; set; }
+
+        [JsonIgnore]
         public virtual ICollection<Telefono> Telefonos { get; set; }
     }
 }

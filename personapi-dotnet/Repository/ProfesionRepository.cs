@@ -40,7 +40,7 @@ namespace personapi_dotnet.Repository
 
         public async Task<Profesion> UpdateAsync(Profesion profesion)
         {
-            _context.Entry(profesion).State = EntityState.Modified;
+            _context.Profesions.Update(profesion);
             await _context.SaveChangesAsync();
             return profesion;
         }

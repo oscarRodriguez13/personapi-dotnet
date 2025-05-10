@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace personapi_dotnet.Models.Entities
 {
@@ -14,6 +15,7 @@ namespace personapi_dotnet.Models.Entities
         public string Nom { get; set; }
         public string Des { get; set; }
 
+        [JsonIgnore]
         public virtual ICollection<Estudio> Estudios { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using personapi_dotnet.Models.Entities;
 using personapi_dotnet.Repository.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -8,120 +9,85 @@ namespace personapi_dotnet.ApiControllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TelefonosApiController : ControllerBase
+    public class TelefonoApiController : ControllerBase
     {
-        private readonly ITelefonoRepository _repository;
+        private readonly ITelefonoRepository _telefonoRepository;
+        private readonly IPersonaRepository _personaRepository;
 
-        public TelefonosApiController(ITelefonoRepository repository)
+        public TelefonoApiController(
+            ITelefonoRepository telefonoRepository,
+            IPersonaRepository personaRepository)
         {
-            _repository = repository;
+            _telefonoRepository = telefonoRepository;
+            _personaRepository = personaRepository;
         }
 
-        // GET: api/TelefonosApi
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<Telefono>>> GetTelefonos()
+        public async Task<ActionResult<IEnumerable<Telefono>>> GetAll()
         {
-            var telefonos = await _repository.GetAllAsync();
+            var telefonos = await _telefonoRepository.GetAllAsync();
             return Ok(telefonos);
         }
 
-        // GET: api/TelefonosApi/5551234567
-        [HttpGet("{numero}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Telefono>> GetTelefono(string numero)
+        [HttpGet("{num}")]
+        public async Task<ActionResult<Telefono>> Get(string num)
         {
-            var telefono = await _repository.GetByNumeroAsync(numero);
-
-            if (telefono == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(telefono);
+            var telefono = await _telefonoRepository.GetByNumeroAsync(num);
+            return telefono == null ? NotFound($"No se encontró el teléfono con número {num}") : Ok(telefono);
         }
 
-        // GET: api/TelefonosApi/porPersona/5
-        [HttpGet("porPersona/{personaId}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<Telefono>>> GetTelefonosPorPersona(int personaId)
-        {
-            var telefonos = await _repository.GetByPersonaIdAsync(personaId);
-            return Ok(telefonos);
-        }
-
-        // POST: api/TelefonosApi
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Telefono>> CreateTelefono(Telefono telefono)
+        public async Task<ActionResult> Create(Telefono telefono)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (telefono == null || string.IsNullOrWhiteSpace(telefono.Num))
+                return BadRequest("Número de teléfono inválido");
 
-            try
-            {
-                var nuevoTelefono = await _repository.CreateAsync(telefono);
-                return CreatedAtAction(nameof(GetTelefono), new { numero = nuevoTelefono.Num }, nuevoTelefono);
-            }
-            catch (Exception ex)
-            {
-                // Log the exception
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error al crear el teléfono: {ex.Message}");
-            }
+            ModelState.Remove(nameof(telefono.DuenioNavigation));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var persona = await _personaRepository.GetByIdAsync(telefono.Duenio);
+            if (persona == null)
+                return NotFound("La persona asociada al teléfono no existe");
+
+            telefono.DuenioNavigation = persona;
+
+            await _telefonoRepository.CreateAsync(telefono);
+            return CreatedAtAction(nameof(Get), new { num = telefono.Num }, telefono);
         }
 
-        // PUT: api/TelefonosApi/5551234567
-        [HttpPut("{numero}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateTelefono(string numero, Telefono telefono)
+        [HttpPut("{num}")]
+        public async Task<IActionResult> Update(string num, Telefono telefono)
         {
-            if (numero != telefono.Num)
-            {
-                return BadRequest();
-            }
+            if (telefono == null || num != telefono.Num)
+                return BadRequest("Número en la ruta no coincide con el del modelo");
 
+            ModelState.Remove(nameof(telefono.DuenioNavigation));
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            if (!await _repository.ExistsAsync(numero))
-            {
-                return NotFound();
-            }
+            var persona = await _personaRepository.GetByIdAsync(telefono.Duenio);
+            if (persona == null)
+                return NotFound("La persona asociada al teléfono no existe");
 
-            try
-            {
-                await _repository.UpdateAsync(telefono);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                // Log the exception
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error al actualizar el teléfono: {ex.Message}");
-            }
+            var existingTelefono = await _telefonoRepository.GetByNumeroAsync(num);
+            if (existingTelefono == null)
+                return NotFound($"El teléfono {num} no existe");
+
+            telefono.DuenioNavigation = persona;
+            await _telefonoRepository.UpdateAsync(telefono);
+
+            return NoContent();
         }
 
-        // DELETE: api/TelefonosApi/5551234567
-        [HttpDelete("{numero}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteTelefono(string numero)
+        [HttpDelete("{num}")]
+        public async Task<IActionResult> Delete(string num)
         {
-            if (!await _repository.ExistsAsync(numero))
-            {
-                return NotFound();
-            }
+            var telefono = await _telefonoRepository.GetByNumeroAsync(num);
+            if (telefono == null)
+                return NotFound($"No se encontró el teléfono con número {num}");
 
-            await _repository.DeleteAsync(numero);
-
+            await _telefonoRepository.DeleteAsync(num);
             return NoContent();
         }
     }

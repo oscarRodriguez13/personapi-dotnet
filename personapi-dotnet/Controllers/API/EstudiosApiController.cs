@@ -4,35 +4,39 @@ using personapi_dotnet.Repository.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace personapi_dotnet.ApiControllers
+namespace personapi_dotnet.Controllers.API
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EstudiosApiController : ControllerBase
+    public class EstudiosController : ControllerBase
     {
-        private readonly IEstudioRepository _repository;
+        private readonly IEstudioRepository _estudioRepository;
+        private readonly IPersonaRepository _personaRepository;
+        private readonly IProfesionRepository _profesionRepository;
 
-        public EstudiosApiController(IEstudioRepository repository)
+        public EstudiosController(
+            IEstudioRepository estudioRepository,
+            IPersonaRepository personaRepository,
+            IProfesionRepository profesionRepository)
         {
-            _repository = repository;
+            _estudioRepository = estudioRepository;
+            _personaRepository = personaRepository;
+            _profesionRepository = profesionRepository;
         }
 
-        // GET: api/EstudiosApi
+        // GET: api/Estudios
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<Estudio>>> GetEstudios()
         {
-            var estudios = await _repository.GetAllAsync();
+            var estudios = await _estudioRepository.GetAllAsync();
             return Ok(estudios);
         }
 
-        // GET: api/EstudiosApi/profesion/5/persona/10
-        [HttpGet("profesion/{idProf}/persona/{ccPer}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        // GET: api/Estudios/5/10
+        [HttpGet("{idProf}/{ccPer}")]
         public async Task<ActionResult<Estudio>> GetEstudio(int idProf, int ccPer)
         {
-            var estudio = await _repository.GetByIdAsync(idProf, ccPer);
+            var estudio = await _estudioRepository.GetByIdAsync(idProf, ccPer);
 
             if (estudio == null)
             {
@@ -42,87 +46,91 @@ namespace personapi_dotnet.ApiControllers
             return Ok(estudio);
         }
 
-        // GET: api/EstudiosApi/porPersona/5
-        [HttpGet("porPersona/{ccPer}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<Estudio>>> GetEstudiosPorPersona(int ccPer)
-        {
-            var estudios = await _repository.GetByPersonaIdAsync(ccPer);
-            return Ok(estudios);
-        }
-
-        // GET: api/EstudiosApi/porProfesion/5
-        [HttpGet("porProfesion/{idProf}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<Estudio>>> GetEstudiosPorProfesion(int idProf)
-        {
-            var estudios = await _repository.GetByProfesionIdAsync(idProf);
-            return Ok(estudios);
-        }
-
-        // POST: api/EstudiosApi
+        // POST: api/Estudios
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<Estudio>> CreateEstudio(Estudio estudio)
+        public async Task<ActionResult<Estudio>> PostEstudio(Estudio estudio)
         {
-            if (!ModelState.IsValid)
+            // Verificar que existan la persona y la profesión
+            var persona = await _personaRepository.GetByIdAsync(estudio.CcPer);
+            var profesion = await _profesionRepository.GetByIdAsync(estudio.IdProf);
+
+            if (persona == null || profesion == null)
             {
-                return BadRequest(ModelState);
+                return BadRequest("La persona o profesión especificada no existe");
             }
 
-            await _repository.CreateAsync(estudio);
+            // Cargar propiedades de navegación manualmente
+            estudio.CcPerNavigation = persona;
+            estudio.IdProfNavigation = profesion;
 
-            return CreatedAtAction(
-                nameof(GetEstudio),
-                new { idProf = estudio.IdProf, ccPer = estudio.CcPer },
-                estudio);
+            try
+            {
+                await _estudioRepository.CreateAsync(estudio);
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, $"Error interno al crear el estudio: {ex.Message}");
+            }
+
+            return CreatedAtAction(nameof(GetEstudio), new { idProf = estudio.IdProf, ccPer = estudio.CcPer }, estudio);
         }
 
-        // PUT: api/EstudiosApi/profesion/5/persona/10
-        [HttpPut("profesion/{idProf}/persona/{ccPer}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> UpdateEstudio(int idProf, int ccPer, Estudio estudio)
+        // PUT: api/Estudios/5/10
+        [HttpPut("{idProf}/{ccPer}")]
+        public async Task<IActionResult> PutEstudio(int idProf, int ccPer, Estudio estudio)
         {
             if (idProf != estudio.IdProf || ccPer != estudio.CcPer)
             {
-                return BadRequest();
+                return BadRequest("Los identificadores en la URL no coinciden con los datos del estudio");
             }
 
-            if (!ModelState.IsValid)
+            // Verificar que existan la persona y la profesión
+            var persona = await _personaRepository.GetByIdAsync(estudio.CcPer);
+            var profesion = await _profesionRepository.GetByIdAsync(estudio.IdProf);
+
+            if (persona == null || profesion == null)
             {
-                return BadRequest(ModelState);
+                return BadRequest("La persona o profesión especificada no existe");
             }
 
-            if (!await _repository.ExistsAsync(idProf, ccPer))
+            // Verificar que el estudio a actualizar existe
+            var existingEstudio = await _estudioRepository.GetByIdAsync(idProf, ccPer);
+            if (existingEstudio == null)
             {
-                return NotFound();
+                return NotFound($"No se encontró el estudio con IdProf={idProf} y CcPer={ccPer}");
             }
 
-            var updated = await _repository.UpdateAsync(estudio);
+            // Cargar propiedades de navegación
+            estudio.CcPerNavigation = persona;
+            estudio.IdProfNavigation = profesion;
 
-            if (updated == null)
+            try
             {
-                return NotFound();
+                await _estudioRepository.UpdateAsync(estudio);
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, $"Error interno al actualizar el estudio: {ex.Message}");
             }
 
             return NoContent();
         }
 
-        // DELETE: api/EstudiosApi/profesion/5/persona/10
-        [HttpDelete("profesion/{idProf}/persona/{ccPer}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        // DELETE: api/Estudios/5/10
+        [HttpDelete("{idProf}/{ccPer}")]
         public async Task<IActionResult> DeleteEstudio(int idProf, int ccPer)
         {
-            if (!await _repository.ExistsAsync(idProf, ccPer))
+            var estudio = await _estudioRepository.GetByIdAsync(idProf, ccPer);
+            if (estudio == null)
             {
-                return NotFound();
+                return NotFound($"No se encontró el estudio con IdProf={idProf} y CcPer={ccPer}");
             }
 
-            await _repository.DeleteAsync(idProf, ccPer);
+            var result = await _estudioRepository.DeleteAsync(idProf, ccPer);
+            if (!result)
+            {
+                return StatusCode(500, "Ocurrió un error al eliminar el estudio");
+            }
 
             return NoContent();
         }
