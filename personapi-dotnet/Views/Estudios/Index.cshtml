@@ -71,13 +71,13 @@
                             </td>
                             <td>
                                 <div class="d-flex justify-content-center gap-2">
-                                    <a asp-action="Edit" asp-route-id="@item.CcPer" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
+                                    <a asp-action="Edit" asp-route-idProf="@item.IdProf" asp-route-ccPer="@item.CcPer" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-action="Details" asp-route-id="@item.CcPer" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Ver detalles">
+                                    <a asp-action="Details" asp-route-idProf="@item.IdProf" asp-route-ccPer="@item.CcPer" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Ver detalles">
                                         <i class="fas fa-info-circle"></i>
                                     </a>
-                                    <a asp-action="Delete" asp-route-id="@item.CcPer" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Eliminar">
+                                    <a asp-action="Delete" asp-route-idProf="@item.IdProf" asp-route-ccPer="@item.CcPer" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Eliminar">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                 </div>

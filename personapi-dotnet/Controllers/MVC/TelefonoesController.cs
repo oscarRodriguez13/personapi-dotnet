@@ -2,11 +2,11 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using personapi_dotnet.Models.Entities;
-using personapi_dotnet.Models.Interfaces;
+using personapi_dotnet.Repository.Interfaces;
 using System;
 using System.Threading.Tasks;
 
-namespace personapi_dotnet.Controllers
+namespace personapi_dotnet.Controllers.MVC
 {
     public class TelefonoesController : Controller
     {

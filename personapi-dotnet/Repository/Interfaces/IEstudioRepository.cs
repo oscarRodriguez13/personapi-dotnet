@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace personapi_dotnet.Models.Interfaces
+namespace personapi_dotnet.Repository.Interfaces
 {
     public interface IEstudioRepository
     {

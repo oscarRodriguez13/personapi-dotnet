@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using personapi_dotnet.Models;
 
-namespace personapi_dotnet.Controllers
+namespace personapi_dotnet.Controllers.MVC
 {
     public class HomeController : Controller
     {

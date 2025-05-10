@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using personapi_dotnet.Models.Entities;
-using personapi_dotnet.Models.Interfaces;
+using personapi_dotnet.Repository.Interfaces;
 using System.Threading.Tasks;
 
-namespace personapi_dotnet.Controllers
+namespace personapi_dotnet.Controllers.MVC
 {
     public class EstudiosController : Controller
     {
@@ -50,35 +50,38 @@ namespace personapi_dotnet.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("IdProf,CcPer,Fecha,Univer")] Estudio estudio)
+        public async Task<IActionResult> Create(Estudio estudio)
         {
-            _logger.LogInformation("POST Create llamado con datos: IdProf={IdProf}, CcPer={CcPer}, Fecha={Fecha}, Univer={Univer}",
-                estudio.IdProf, estudio.CcPer, estudio.Fecha, estudio.Univer);
+            Console.WriteLine("Intentando crear estudio:");
+            Console.WriteLine($"IdProf: {estudio.IdProf}, CcPer: {estudio.CcPer}, Fecha: {estudio.Fecha}, Univer: {estudio.Univer}");
+
+            // Quitar validación de propiedades de navegación que no vienen del formulario
+            ModelState.Remove(nameof(estudio.CcPerNavigation));
+            ModelState.Remove(nameof(estudio.IdProfNavigation));
 
             if (ModelState.IsValid)
             {
-                _logger.LogInformation("ModelState válido");
+                // Cargar propiedades de navegación manualmente
+                estudio.CcPerNavigation = await _personaRepository.GetByIdAsync(estudio.CcPer);
+                estudio.IdProfNavigation = await _profesionRepository.GetByIdAsync(estudio.IdProf);
 
-                if (await _estudioRepository.ExistsAsync(estudio.IdProf, estudio.CcPer))
-                {
-                    _logger.LogWarning("Estudio ya existe con IdProf={IdProf}, CcPer={CcPer}", estudio.IdProf, estudio.CcPer);
-                    ModelState.AddModelError("", "Ya existe un estudio con esta combinación de profesión y persona.");
-                    await LoadViewDataAsync(estudio);
-                    return View(estudio);
-                }
+                Console.WriteLine("Persona encontrada: " + (estudio.CcPerNavigation != null ? "Sí" : "No"));
+                Console.WriteLine("Profesión encontrada: " + (estudio.IdProfNavigation != null ? "Sí" : "No"));
 
                 await _estudioRepository.CreateAsync(estudio);
-                _logger.LogInformation("Estudio creado correctamente. Redirigiendo a Index.");
+                Console.WriteLine("Estudio creado correctamente.");
                 return RedirectToAction(nameof(Index));
             }
 
-            _logger.LogWarning("ModelState inválido");
+            Console.WriteLine("ModelState inválido:");
             foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
             {
-                _logger.LogWarning("Error de modelo: {ErrorMessage}", error.ErrorMessage);
+                Console.WriteLine($" - {error.ErrorMessage}");
             }
 
-            await LoadViewDataAsync(estudio);
+            // Recargar SelectList en caso de error
+            ViewData["CcPer"] = new SelectList(await _personaRepository.GetAllAsync(), "Cc", "Cc", estudio.CcPer);
+            ViewData["IdProf"] = new SelectList(await _profesionRepository.GetAllAsync(), "Id", "Nom", estudio.IdProf);
             return View(estudio);
         }
 
@@ -86,36 +89,49 @@ namespace personapi_dotnet.Controllers
         public async Task<IActionResult> Edit(int idProf, int ccPer)
         {
             var estudio = await _estudioRepository.GetByIdAsync(idProf, ccPer);
-            if (estudio == null)
-            {
-                return NotFound();
-            }
+            if (estudio == null) return NotFound();
 
-            await LoadViewDataAsync(estudio);
+            ViewData["CcPer"] = new SelectList(await _personaRepository.GetAllAsync(), "Cc", "Cc", estudio.CcPer);
+            ViewData["IdProf"] = new SelectList(await _profesionRepository.GetAllAsync(), "Id", "Nom", estudio.IdProf);
             return View(estudio);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int idProf, int ccPer, [Bind("IdProf,CcPer,Fecha,Univer")] Estudio estudio)
+        public async Task<IActionResult> Edit(int idProf, int ccPer, Estudio estudio)
         {
+            Console.WriteLine("Intentando editar estudio:");
+            Console.WriteLine($"IdProf: {estudio.IdProf}, CcPer: {estudio.CcPer}, Fecha: {estudio.Fecha}, Univer: {estudio.Univer}");
+
+            // Quitar validación de propiedades de navegación que no vienen del formulario
+            ModelState.Remove(nameof(estudio.CcPerNavigation));
+            ModelState.Remove(nameof(estudio.IdProfNavigation));
+
             if (idProf != estudio.IdProf || ccPer != estudio.CcPer)
             {
-                return NotFound();
+                Console.WriteLine("IDs en URL no coinciden con el modelo.");
+                return BadRequest();
             }
 
             if (ModelState.IsValid)
             {
-                if (!await _estudioRepository.ExistsAsync(idProf, ccPer))
-                {
-                    return NotFound();
-                }
+                estudio.CcPerNavigation = await _personaRepository.GetByIdAsync(estudio.CcPer);
+                estudio.IdProfNavigation = await _profesionRepository.GetByIdAsync(estudio.IdProf);
 
+                Console.WriteLine("ModelState válido. Actualizando estudio...");
                 await _estudioRepository.UpdateAsync(estudio);
                 return RedirectToAction(nameof(Index));
             }
 
-            await LoadViewDataAsync(estudio);
+            Console.WriteLine("ModelState inválido:");
+            foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+            {
+                Console.WriteLine($" - {error.ErrorMessage}");
+            }
+
+            // Recargar SelectList en caso de error
+            ViewData["CcPer"] = new SelectList(await _personaRepository.GetAllAsync(), "Cc", "Cc", estudio.CcPer);
+            ViewData["IdProf"] = new SelectList(await _profesionRepository.GetAllAsync(), "Id", "Nom", estudio.IdProf);
             return View(estudio);
         }
 
