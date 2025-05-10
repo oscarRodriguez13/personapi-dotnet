@@ -10,12 +10,16 @@
   <ItemGroup>
     <Compile Remove="Controllers\API\NewFolder\**" />
     <Compile Remove="Controllers\NewFolder1\**" />
+    <Compile Remove="NewFolder\**" />
     <Content Remove="Controllers\API\NewFolder\**" />
     <Content Remove="Controllers\NewFolder1\**" />
+    <Content Remove="NewFolder\**" />
     <EmbeddedResource Remove="Controllers\API\NewFolder\**" />
     <EmbeddedResource Remove="Controllers\NewFolder1\**" />
+    <EmbeddedResource Remove="NewFolder\**" />
     <None Remove="Controllers\API\NewFolder\**" />
     <None Remove="Controllers\NewFolder1\**" />
+    <None Remove="NewFolder\**" />
   </ItemGroup>
 
   <ItemGroup>

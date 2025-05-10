@@ -1,0 +1,50 @@
+services:
+  webapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: personapi-dotnet
+    ports:
+      - "9090:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver-db;Database=persona_db;User Id=sa;Password=SaPassw0rd!;TrustServerCertificate=True;
+    depends_on:
+      - db
+    networks:
+      - my_network
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-db
+    environment:
+      - SA_PASSWORD=SaPassw0rd!
+      - ACCEPT_EULA=Y
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - my_network
+
+  db-init:
+    image: mcr.microsoft.com/mssql-tools
+    container_name: db-init
+    depends_on:
+      - db
+    volumes:
+      - ./init-db:/scripts
+    entrypoint: >
+      /bin/bash -c "
+        sleep 20;
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver-db -U sa -P SaPassw0rd! -d master -i /scripts/init.sql;
+      "
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
+
+volumes:
+  mssql_data:
