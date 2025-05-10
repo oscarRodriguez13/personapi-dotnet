@@ -5,6 +5,10 @@ BEGIN
 END
 GO
 
+-- Asignar la base de datos al usuario 'sa'
+ALTER AUTHORIZATION ON DATABASE::persona_db TO sa;
+GO
+
 -- Usar la base de datos
 USE persona_db;
 GO
@@ -18,7 +22,7 @@ BEGIN
         apellido VARCHAR(45) NOT NULL,
         edad INT NULL,
         genero CHAR(1) NOT NULL,
-        CONSTRAINT PK__persona__3213666D564B0149 PRIMARY KEY (cc)
+        CONSTRAINT PK_persona_3213666D564B0149 PRIMARY KEY (cc)
     );
 END
 GO
@@ -30,7 +34,7 @@ BEGIN
         id INT NOT NULL,
         nom VARCHAR(90) NOT NULL,
         des TEXT NOT NULL,
-        CONSTRAINT PK__profesio__3213E83F2B1F13F8 PRIMARY KEY (id)
+        CONSTRAINT PK_profesio_3213E83F2B1F13F8 PRIMARY KEY (id)
     );
 END
 GO
@@ -42,8 +46,8 @@ BEGIN
         num VARCHAR(15) NOT NULL,
         oper VARCHAR(45) NOT NULL,
         duenio INT NOT NULL,
-        CONSTRAINT PK__telefono__DF908D659694C3B2 PRIMARY KEY (num),
-        CONSTRAINT FK__telefono__duenio__37A5467C FOREIGN KEY (duenio)
+        CONSTRAINT PK_telefono_DF908D659694C3B2 PRIMARY KEY (num),
+        CONSTRAINT FK_telefonoduenio_37A5467C FOREIGN KEY (duenio)
             REFERENCES persona (cc)
     );
 END
@@ -59,10 +63,10 @@ BEGIN
         univer VARCHAR(50) NOT NULL,
         PersonaCc INT NOT NULL,
         ProfesionId INT NOT NULL,
-        CONSTRAINT PK__estudios__FB3F71A6B8574F61 PRIMARY KEY (id_prof, cc_per),
-        CONSTRAINT FK__estudios__cc_per__33D4B598 FOREIGN KEY (cc_per)
+        CONSTRAINT PK_estudios_FB3F71A6B8574F61 PRIMARY KEY (id_prof, cc_per),
+        CONSTRAINT FK_estudioscc_per_33D4B598 FOREIGN KEY (cc_per)
             REFERENCES persona (cc),
-        CONSTRAINT FK__estudios__id_pro__34C8D9D1 FOREIGN KEY (id_prof)
+        CONSTRAINT FK_estudiosid_pro_34C8D9D1 FOREIGN KEY (id_prof)
             REFERENCES profesion (id),
         CONSTRAINT FK_estudios_persona_PersonaCc FOREIGN KEY (PersonaCc)
             REFERENCES persona (cc) ON DELETE CASCADE,
